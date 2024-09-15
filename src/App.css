@@ -1,0 +1,6 @@
+svg {
+  margin-inline: 0.5rem !important;
+}
+[data-testid="flowbite-tooltip-target"] {
+  color: #3b82f6;
+}
