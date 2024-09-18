@@ -30,19 +30,6 @@ function App() {
         theme={{
           algorithm:
             mode === "dark" ? theme.darkAlgorithm : theme.defaultAlgorithm,
-          // token: {
-          //   colorPrimary: mode === "dark" ? "#1890ff" : "#f5222d", // Example custom color
-          // },
-          // components: {
-          //   Input: {
-          //     hoverBg: "rgb(20,20,20)",
-          //     activeBg: "rgb(20,20,20)",
-          //     colorFillSecondary: "rgb(20,20,20)",
-          //     colorFillTertiary: "rgb(20,20,20)",
-          //     addonBg: "rgb(20,20,20)",
-          //     colorBgContainer: "rgb(20,20,20)",
-          //   },
-          // },
         }}
       >
         <BrowserRouter>
@@ -53,7 +40,7 @@ function App() {
             </Route>
             <Route path="/login" element={<SignIn />} />
             <Route path="/register" element={<SignUp />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
+            {/* <Route path="/forgot-password" element={<ForgotPassword />} /> */}
           </Routes>
         </BrowserRouter>
       </ConfigProvider>

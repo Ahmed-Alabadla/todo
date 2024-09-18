@@ -3,7 +3,7 @@
   "don't_have_account": "Don't have an account?",
   "sign_Up": "Sign Up",
   "sign_In": "Sign In",
-  "incorrect_input": "Incorrect username or password.",
+  "incorrect_input": "Invalid email or password.",
   "email_required": "Email is required",
   "invalid_email": "Invalid email",
   "email": "Email",

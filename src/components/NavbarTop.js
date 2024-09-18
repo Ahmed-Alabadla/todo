@@ -134,7 +134,11 @@ function NavbarTop() {
           {/* ----------------- */}
           <Dropdown
             inline={false}
-            label={<span className="w-6 sm:w-full">Ahmed Alabadla</span>}
+            label={
+              <span className="w-6 sm:w-full">
+                {sessionStorage.getItem("user_name") || ""}
+              </span>
+            }
           >
             <Dropdown.Item>
               <Link to="/profile" className="flex">

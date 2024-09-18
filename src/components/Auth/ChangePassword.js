@@ -5,6 +5,8 @@ import { AiFillEye, AiFillEyeInvisible } from "react-icons/ai";
 import { GrClose } from "react-icons/gr";
 import { useDispatch, useSelector } from "react-redux";
 import { hiddenUpdatePasswordAction } from "../../redux/displaySlice";
+import { toast } from "react-toastify";
+import api from "../../api";
 
 const ChangePassword = () => {
   const displayPassword = useSelector(
@@ -23,30 +25,70 @@ const ChangePassword = () => {
   const [newPasswordEye, setNewPasswordEye] = useState(false);
   const [conNewPasswordEye, setConNewPasswordEye] = useState(false);
 
-  const [errorChangePass, setErrorChangePass] = useState(true);
+  const [errorChangePass, setErrorChangePass] = useState(false);
 
   // handle form events
   const {
     register: registerChangePass,
     handleSubmit: handleSubmitChangePass,
     reset: resetChangePass,
-    watch,
     formState: { errors: errorsChangePass },
   } = useForm();
 
   // check password event
   const [validateConfirmPass, setValidateConfirmPass] = useState("");
-  // check password event
-  const checkConfirmPassword = watch(validateConfirmPass);
+  const [loading, setLoading] = useState(false);
 
   const onSubmitChangePass = (data) => {
+    setLoading(true);
     console.log(data);
-    resetChangePass();
+    const token = sessionStorage.getItem("token");
+    api
+      .put(`/change-password`, data, {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        console.log(res.data);
+        setLoading(false);
+        resetChangePass();
+        dispatch(hiddenUpdatePasswordAction());
+        toast.success(res.data.message, {
+          position: "bottom-left",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+        setLoading(false);
+        setErrorChangePass(true);
+        toast.error(err.response.data.message, {
+          position: "bottom-left",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        });
+      });
   };
   const dispatch = useDispatch();
 
   const handleClose = () => {
     dispatch(hiddenUpdatePasswordAction());
+    resetChangePass();
+    setErrorChangePass(false);
   };
   return (
     <div className={`relative z-10 ${displayChangePass}`}>
@@ -64,8 +106,8 @@ const ChangePassword = () => {
               </button>
             </div>
             {errorChangePass && (
-              <div className="flex items-center justify-center mt-5 mx-6 p-3 rounded-lg text-white bg-red-500">
-                Incorrect Password
+              <div className="uppercase flex items-center justify-center mt-5 mx-6 p-3 rounded-lg text-white bg-red-500">
+                Invalid old Password
               </div>
             )}
             <div className="bg-white dark:bg-slate-700 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
@@ -85,7 +127,7 @@ const ChangePassword = () => {
                         "focus:border-red-500 focus:ring-red-500 border-red-500"
                       }`}
                       placeholder="********"
-                      {...registerChangePass("oldPassword", {
+                      {...registerChangePass("old_password", {
                         required: "Old password is required",
                         minLength: {
                           value: 8,
@@ -140,7 +182,7 @@ const ChangePassword = () => {
                         "focus:border-red-500 focus:ring-red-500 border-red-500"
                       }`}
                       placeholder="********"
-                      {...registerChangePass("newPassword", {
+                      {...registerChangePass("new_password", {
                         required: "New password is required",
                         minLength: {
                           value: 8,
@@ -213,7 +255,7 @@ const ChangePassword = () => {
                             "Confirm New password must have at most 20 characters",
                         },
                         validate: (value) =>
-                          value === checkConfirmPassword ||
+                          value === validateConfirmPass ||
                           "The confirm new password do not match",
                       })}
                     />
@@ -249,10 +291,11 @@ const ChangePassword = () => {
                 {/* ------------------- */}
                 <div className="dark:bg-slate-700 bg-gray-50 mt-1 sm:flex sm:gap-3">
                   <button
+                    disabled={loading}
                     type="submit"
-                    className="text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-base px-5 py-2.5 text-center mr-2 mb-2"
+                    className="text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:bg-gradient-to-br disabled:opacity-50 focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-base px-5 py-2.5 text-center mr-2 mb-2"
                   >
-                    Change password
+                    {loading ? t("loadingUpdate") : "Change Password"}
                   </button>
                   <button
                     onClick={handleClose}

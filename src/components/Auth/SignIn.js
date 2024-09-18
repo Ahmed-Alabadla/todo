@@ -1,14 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { AiFillEyeInvisible, AiFillEye } from "react-icons/ai";
 import { useForm } from "react-hook-form";
 import { useTranslation } from "react-i18next";
-import axios from "axios";
+import api from "../../api";
 
 const SignIn = () => {
   // handle Password eye
   const [passwordEye, setPasswordEye] = useState(false);
-  const [errorSignIn, setErrorSignIn] = useState(true);
+  const [errorSignIn, setErrorSignIn] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const { t } = useTranslation();
 
@@ -23,32 +24,43 @@ const SignIn = () => {
   } = useForm();
 
   const onSubmit = (data) => {
-    console.log(data);
-    // axios.post("url", data ,{
-    //     headers: {
-    //       // Authorization: "Bearer " + token,
-    //       Accept: "application/json",
-    //       "Content-Type": "multipart/form-data",
-    //     },
-    //   })
-    //   .then((res) => {
-    //     console.log(res.data);
-    //     reset();
-    //     route("/");
-    //   })
-    //   .catch((err) => console.log(err));
+    setLoading(true);
+    api
+      .post("/login", data, {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      })
+      .then((res) => {
+        // console.log(res.data);
+        setLoading(false);
+
+        sessionStorage.setItem("token", res.data.token);
+        sessionStorage.setItem("user_name", res.data.user.name);
+        sessionStorage.setItem("userId", res.data.user.id);
+
+        route("/");
+        reset();
+      })
+      .catch((err) => {
+        setLoading(false);
+
+        setErrorSignIn(true);
+        console.log(err);
+      });
   };
 
   // -----------------
 
-  // useEffect(() => {
-  //   const loggedInUser = localStorage.getItem("user");
-  //   if (loggedInUser) {
-  //     // const foundUser = JSON.parse(loggedInUser);
+  useEffect(() => {
+    const loggedInUser = sessionStorage.getItem("token");
+    if (loggedInUser) {
+      // const foundUser = JSON.parse(loggedInUser);
 
-  //     route("/");
-  //   }
-  // }, []);
+      route("/");
+    }
+  }, [route]);
 
   return (
     <div className="h-screen   flex items-center justify-center dark:bg-slate-900">
@@ -158,7 +170,7 @@ const SignIn = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
+          {/* <div className="flex items-center justify-between">
             <div className="flex items-center">
               <input
                 id="remember-me"
@@ -182,13 +194,14 @@ const SignIn = () => {
                 {t("forgot_password")}
               </Link>
             </div>
-          </div>
+          </div> */}
           <div>
             <button
+              disabled={loading}
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700 dark:bg-sky-700 dark:hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md disabled:bg-sky-600/50 disabled:hover:bg-sky-600/50 text-white bg-sky-600 hover:bg-sky-700 dark:bg-sky-700 dark:disabled:bg-sky-700/50 dark:hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
             >
-              {t("sign_In")}
+              {!loading ? t("sign_In") : t("loadingUpdate")}
             </button>
           </div>
         </form>

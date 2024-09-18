@@ -1,12 +1,26 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { AiFillEyeInvisible, AiFillEye } from "react-icons/ai";
 import { useTranslation } from "react-i18next";
+import api from "../../api";
 
 function SignUp() {
+  const route = useNavigate();
+  useEffect(() => {
+    const loggedInUser = sessionStorage.getItem("token");
+    if (loggedInUser) {
+      // const foundUser = JSON.parse(loggedInUser);
+
+      route("/");
+    }
+  }, [route]);
+
+  // =======================
+
   const [validatePass, setValidatePass] = useState("");
-  const [errorSignUp, setErrorSignUp] = useState(true);
+  const [errorSignUp, setErrorSignUp] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // handle Password eye
   const [passwordEye, setPasswordEye] = useState(false);
@@ -23,21 +37,31 @@ function SignUp() {
 
   // handleSubmit
   const onSubmit = (data) => {
-    console.log(data);
-    reset();
+    setLoading(true);
+    api
+      .post("/register", data, {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+      })
+      .then((res) => {
+        // console.log(res.data);
+        setLoading(false);
+
+        route("/login");
+        reset();
+      })
+      .catch((err) => {
+        setLoading(false);
+
+        setErrorSignUp(true);
+        console.log(err);
+      });
   };
 
   // -----------------
 
-  // const route = useNavigate();
-  // useEffect(() => {
-  //   const loggedInUser = localStorage.getItem("user");
-  //   if (loggedInUser) {
-  //     // const foundUser = JSON.parse(loggedInUser);
-
-  //     route("/");
-  //   }
-  // }, []);
   return (
     <div className="h-screen   flex items-center justify-center dark:bg-slate-900">
       <div className=" max-w-md w-full space-y-8 py-12 px-4 sm:px-6 lg:px-8 rounded-lg shadow-lg mx-auto dark:bg-slate-800">
@@ -271,10 +295,11 @@ function SignUp() {
 
           <div>
             <button
+              disabled={loading}
               type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-sky-600 hover:bg-sky-700 dark:bg-sky-700 dark:hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md disabled:bg-sky-600/50 disabled:hover:bg-sky-600/50 text-white bg-sky-600 hover:bg-sky-700 dark:bg-sky-700 dark:disabled:bg-sky-700/50 dark:hover:bg-sky-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500"
             >
-              {t("sign_Up")}
+              {!loading ? t("sign_Up") : t("loadingUpdate")}
             </button>
           </div>
         </form>

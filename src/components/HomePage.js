@@ -1,17 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 // import CarouselAds from "./CarouselAds";
-import {
-  Button,
-  Form,
-  Modal,
-  Space,
-  Input,
-  Table,
-  Tag,
-  Radio,
-  ConfigProvider,
-  theme,
-} from "antd";
+import { Button, Form, Modal, Space, Input, Table, Tag, Radio } from "antd";
 
 import {
   SearchOutlined,
@@ -26,57 +15,61 @@ import "react-toastify/dist/ReactToastify.css";
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import api from "../api";
-import axios from "axios";
+import { useNavigate } from "react-router";
 
 function HomePage() {
+  const route = useNavigate();
+
   /*
     Tasks : 
             TO Do
             IN PROGRESS
             DONE
   */
-  const tableData = [
-    {
-      id: "1",
-      title: "task 1",
-      description: "Description 1",
-      status: "pending",
-    },
-    {
-      id: "2",
-      title: "task 2",
-      description: "Description 2",
-      status: "in-progress",
-    },
-    {
-      id: "3",
-      title: "task 3",
-      description: "Description 3",
-      status: "completed",
-    },
-  ];
+  // const tableData = [
+  //   {
+  //     id: "1",
+  //     title: "task 1",
+  //     description: "Description 1",
+  //     status: "pending",
+  //   },
+  //   {
+  //     id: "2",
+  //     title: "task 2",
+  //     description: "Description 2",
+  //     status: "in-progress",
+  //   },
+  //   {
+  //     id: "3",
+  //     title: "task 3",
+  //     description: "Description 3",
+  //     status: "completed",
+  //   },
+  // ];
   const [loading, setLoading] = useState(false);
 
-  // const [tableData, setTableData] = useState([]);
-  // useEffect(() => {
-  //   const getTasks = async () => {
-  //     await api
-  //       .get("/tasks", {
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //           Accept: "application/json",
-  //         },
-  //       })
-  //       .then((res) => {
-  //         console.log(res.data);
-  //       });
-  //   };
-
-  //   getTasks();
-  //   // api.get("tasks").then((res) => {
-  //   //   console.log(res.data);
-  //   // });
-  // }, []);
+  const [tableData, setTableData] = useState([]);
+  useEffect(() => {
+    const token = sessionStorage.getItem("token");
+    setLoading(true);
+    if (!token) {
+      route("/login");
+    } else {
+      api
+        .get("/tasks", {
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        .then((res) => {
+          console.log(res.data);
+          setTableData(res.data);
+          setLoading(false);
+        });
+    }
+  }, [route]);
 
   // -------------------
   const [searchText, setSearchText] = useState("");
@@ -214,73 +207,171 @@ function HomePage() {
   const [modalAddTask, setModalAddTask] = useState(false);
   const [loadingAddTask, setLoadingAddTask] = useState(false);
   const [formAddTask] = Form.useForm();
-  // const titleAddTask = useRef(null);
 
   const onFinishAddTask = (values) => {
+    setLoadingAddTask(true);
+    const token = sessionStorage.getItem("token");
     console.log(values);
-    // api
-    //   .post("/tasks", values, {
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //       Accept: "application/json",
-    //     },
-    //   })
-    //   .then((res) => {
-    //     console.log(res.data);
-    //   });
+    api
+      .post("/tasks", values, {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        setLoadingAddTask(false);
+        setModalAddTask(false);
+        formAddTask.resetFields();
 
-    // toast.success("sd", {
-    //   position: "bottom-left",
-    //   autoClose: 5000,
-    //   hideProgressBar: false,
-    //   closeOnClick: true,
-    //   pauseOnHover: true,
-    //   draggable: true,
-    //   progress: undefined,
-    //   theme: "colored",
-    // });
+        setTableData((prevData) => [...prevData, res.data.task]);
+        console.log(res.data);
+
+        toast.success(res.data.message, {
+          position: "bottom-left",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        });
+      })
+      .catch((err) => {
+        setLoadingAddTask(false);
+
+        toast.error(err, {
+          position: "bottom-left",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        });
+      });
   };
 
   // -----------------Edit Task---------------------
 
   const [formEditTask] = Form.useForm();
   const [modalEditTask, setModalEditTask] = useState(false);
-  const [loadingUpdateTask, setLoadingUpdateTask] = useState(true);
-  const titleUpdateTask = useRef(null);
+  const [loadingUpdateTask, setLoadingUpdateTask] = useState(false);
+  const [taskId, setTaskId] = useState("");
 
   const handleEditClick = (record) => {
     formEditTask.setFieldsValue(record); // Set form fields to the selected row's data
     setModalEditTask(true); // Open modal
+    setTaskId(record._id);
   };
   const onFinishEditTask = (values) => {
-    console.log(values);
+    setLoadingUpdateTask(true);
 
-    // toast.success(" ", {
-    //   position: "bottom-left",
-    //   autoClose: 5000,
-    //   hideProgressBar: false,
-    //   closeOnClick: true,
-    //   pauseOnHover: true,
-    //   draggable: true,
-    //   progress: undefined,
-    //   theme: "colored",
-    // });
+    const token = sessionStorage.getItem("token");
+    api
+      .put(`/tasks/${taskId}`, values, {
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        console.log(res.data);
+
+        setLoadingUpdateTask(false);
+        setModalEditTask(false);
+        // Update the task in the tableData by mapping over the existing tasks
+        setTableData((prevData) =>
+          prevData.map((task) =>
+            task._id === res.data.task._id ? res.data.task : task
+          )
+        );
+        toast.success(res.data.message, {
+          position: "bottom-left",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        });
+      })
+      .catch((err) => {
+        setLoadingAddTask(false);
+        toast.error(err.response.data.error, {
+          position: "bottom-left",
+          autoClose: 3000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "colored",
+        });
+      });
   };
 
   // -----------------Delete Task----------------------
   const { confirm } = Modal;
 
-  const showDeleteConfirm = (id) => {
+  const showDeleteConfirm = (task) => {
     confirm({
-      title: t("delete_task"),
+      title: (
+        <p>
+          {t("delete_task")}{" "}
+          <span className="text-red-500">' {task.title} '</span>
+        </p>
+      ),
       icon: <ExclamationCircleFilled />,
       // content: "Some descriptions",
       okText: t("yes"),
       okType: "danger",
       cancelText: t("no"),
       onOk() {
-        console.log("OK");
-        // axios.delete("")
+        const token = sessionStorage.getItem("token");
+        api
+          .delete(`/tasks/${task._id}`, {
+            headers: {
+              "Content-Type": "application/json",
+              Accept: "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          })
+          .then((res) => {
+            // Filter out the deleted task from the table data
+            setTableData((prevData) =>
+              prevData.filter((t) => t._id !== task._id)
+            );
+
+            toast.success(res.data.message, {
+              position: "bottom-left",
+              autoClose: 3000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              progress: undefined,
+              theme: "colored",
+            });
+          })
+          .catch((err) => {
+            setLoadingAddTask(false);
+            toast.error(err.response.data.error, {
+              position: "bottom-left",
+              autoClose: 3000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              progress: undefined,
+              theme: "colored",
+            });
+          });
       },
       onCancel() {
         console.log("Cancel");
@@ -311,6 +402,7 @@ function HomePage() {
       // width: "20%",
       ...getColumnSearchProps("title"),
       render: (text) => <p className="text-base">{text}</p>,
+      responsive: ["xs", "sm", "md", "lg", "xl", "xxl"], // Always visible
     },
     {
       title: "Description",
@@ -318,6 +410,7 @@ function HomePage() {
       key: "description",
       // width: "25%",
       render: (text) => <p className="text-base">{text}</p>,
+      responsive: ["xs", "sm", "md", "lg", "xl", "xxl"], // Always visible
     },
 
     {
@@ -350,6 +443,29 @@ function HomePage() {
           )}
         </>
       ),
+      responsive: ["sm", "md", "lg", "xl", "xxl"], // Always visible
+    },
+    {
+      title: "Created At",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      responsive: ["md"], // Only visible on screens medium and larger (md and above)
+
+      // width: "25%",
+      render: (text) => (
+        <p className="text-base">{new Date(text).toLocaleString()}</p>
+      ),
+    },
+    {
+      title: "Updated At",
+      dataIndex: "updatedAt",
+      key: "updatedAt",
+      responsive: ["md"], // Only visible on screens medium and larger (md and above)
+
+      // width: "25%",
+      render: (text) => (
+        <p className="text-base">{new Date(text).toLocaleString()}</p>
+      ),
     },
 
     {
@@ -367,13 +483,14 @@ function HomePage() {
           </button>
 
           <button
-            onClick={() => showDeleteConfirm(record.id)}
+            onClick={() => showDeleteConfirm(record)}
             className="px-1.5 py-2.5 bg-red-500 hover:bg-red-600 rounded-lg flex items-center justify-center"
           >
             <DeleteFilled style={{ color: "white", fontSize: "18px" }} />
           </button>
         </div>
       ),
+      responsive: ["xs", "sm", "md", "lg", "xl", "xxl"], // Always visible
     },
   ];
   return (
